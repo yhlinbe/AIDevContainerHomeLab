@@ -1,88 +1,76 @@
 #!/bin/bash
-set -e
-
-echo "🚀 Initializing AI Team Environment and Document Tracking..."
-
-# 1. 建立文檔目錄結構
-mkdir -p .ai/docs/discussions
-mkdir -p .ai/docs/conclusions
-mkdir -p .ai/docs/feedback
-
-# 2. 確保 user-feedback.md 存在
-if [ ! -f .ai/docs/feedback/user-feedback.md ]; then
-  cat <<'EOF' > .ai/docs/feedback/user-feedback.md
-# User Feedback Log
-
-| 日期 | 提出者 | 反饋類型 | 處理狀態 | 關聯文檔 | 反饋摘要 |
-| :--- | :--- | :--- | :--- | :--- | :--- |
-EOF
-fi
-
-# 3. 設定 Bash Alias 方便快速召喚 AI CLI
-echo 'alias claude="claude --dangerously-skip-permissions"' >> ~/.bashrc
-echo 'alias opencode="opencode --config .ai/SYSTEM_INSTRUCTIONS.md"' >> ~/.bashrc
-
-echo "✅ AI Skills & Workflow setup complete!"
-
 set -eo pipefail
 
 echo "=================================================="
 echo "🚀 Starting DevContainer Post-Create Setup"
 echo "=================================================="
 
-# 1. 安裝 全局 Go 工具與 AI CLI 套件 (Claude Code & OpenCode)
+# 1. 建立 AI 團隊文檔目錄與初始化檔案
+setup_ai_docs() {
+    echo "📁 Initializing AI Team Documentation Directories..."
+    mkdir -p .ai/docs/discussions .ai/docs/conclusions .ai/docs/feedback
+
+    if [ ! -f .ai/docs/feedback/user-feedback.md ]; then
+        cat <<'EOF' > .ai/docs/feedback/user-feedback.md
+# User Feedback Log
+
+| 日期 | 提出者 | 反饋類型 | 處理狀態 | 關聯文檔 | 反饋摘要 |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+EOF
+    fi
+
+    # 寫入 Alias 供手動開啟終端機時使用
+    echo 'alias claude="claude --dangerously-skip-permissions"' >> ~/.bashrc
+    echo 'alias opencode="opencode --config .ai/SYSTEM_INSTRUCTIONS.md"' >> ~/.bashrc
+}
+
+# 2. 安裝 全局 CLI 工具與 AI Engines (修正 opencode -> opencode-ai)
 install_global_tools() {
     echo "📦 [1/3] Installing global CLI tools & AI engines..."
-    go install github.com/air-verse/air@latest
+    go install github.com/air-verse/air@latest || true
     
-    # 安裝 AI 開發 CLI 工具
-    npm install -g @anthropic-ai/claude-code opencode
+    # 正確套件名稱：opencode-ai
+    npm install -g @anthropic-ai/claude-code opencode-ai
     
     echo "✅ Global CLI tools and AI engines installed."
 }
 
-# 2. 安裝 後端 NestJS 依賴
+# 3. 安裝 後端 NestJS 依賴
 install_backend() {
-    if [ -d "backend-nest" ]; then
+    if [ -d "backend/nestjs" ]; then
+        echo "📦 [2/3] Installing NestJS dependencies..."
+        (cd backend/nestjs && npm install)
+        echo "✅ NestJS dependencies installed."
+    elif [ -d "backend-nest" ]; then
         echo "📦 [2/3] Installing backend-nest dependencies..."
         (cd backend-nest && npm install)
         echo "✅ backend-nest dependencies installed."
     else
-        echo "⏩ Skipping backend-nest (directory not found)."
+        echo "⏩ Skipping backend dependencies (directory not found)."
     fi
 }
 
-# 3. 安裝 前端 Frontend 依賴
+# 4. 安裝 前端 Frontend 依賴
 install_frontend() {
-    if [ -d "frontend" ]; then
+    if [ -d "frontend/react" ]; then
+        echo "📦 [3/3] Installing React dependencies..."
+        (cd frontend/react && npm install)
+        echo "✅ React dependencies installed."
+    elif [ -d "frontend" ]; then
         echo "📦 [3/3] Installing frontend dependencies..."
         (cd frontend && npm install)
-        echo "✅ frontend dependencies installed."
+        echo "✅ Frontend dependencies installed."
     else
-        echo "⏩ Skipping frontend (directory not found)."
+        echo "⏩ Skipping frontend dependencies (directory not found)."
     fi
 }
 
-# 執行安裝流程
-install_global_tools
+# 5. 生成 VS Code 多分頁 Terminal Tasks (加入 .env 讀取與 Alias 參數)
+generate_vscode_tasks() {
+    echo "⚙️ Generating .vscode/tasks.json..."
+    mkdir -p .vscode
 
-# 前後端依賴平行安裝
-install_backend &
-pid_backend=$!
-
-install_frontend &
-pid_frontend=$!
-
-wait $pid_backend $pid_frontend
-
-echo "=================================================="
-echo "🎉 DevContainer Setup Completed Successfully!"
-echo "=================================================="
-
-echo "=== 2. 生成多分頁 Terminal 設定 (.vscode/tasks.json) ==="
-mkdir -p .vscode
-
-cat <<'EOF' > .vscode/tasks.json
+    cat <<'EOF' > .vscode/tasks.json
 {
   "version": "2.0.0",
   "tasks": [
@@ -109,14 +97,14 @@ cat <<'EOF' > .vscode/tasks.json
     {
       "label": "Terminal: OpenCode (DeepSeek)",
       "type": "shell",
-      "command": "echo '=== OpenCode (DeepSeek) Ready ===' && opencode",
+      "command": "echo '=== OpenCode (DeepSeek) Ready ===' && opencode --config .ai/SYSTEM_INSTRUCTIONS.md",
       "problemMatcher": [],
       "presentation": { "group": "dev-layout", "focus": false }
     },
     {
       "label": "Terminal: Claude Code CLI",
       "type": "shell",
-      "command": "echo '=== Claude Code CLI Ready ===' && claude",
+      "command": "echo '=== Claude Code CLI Ready ===' && claude --dangerously-skip-permissions",
       "problemMatcher": [],
       "presentation": { "group": "dev-layout", "focus": true }
     },
@@ -151,12 +139,31 @@ cat <<'EOF' > .vscode/tasks.json
     {
       "label": "Terminal: Infrastructure Logs",
       "type": "shell",
-      "command": "docker compose -f .devcontainer/docker-compose.dev.yml logs -f --tail=50",
+      "command": "docker compose --env-file .devcontainer/.env -f .devcontainer/docker-compose.dev.yml logs -f --tail=50",
       "problemMatcher": [],
       "presentation": { "group": "dev-layout", "focus": false }
     }
   ]
 }
 EOF
+}
 
-echo "=== Post-Create 完成！ ==="
+# 執行主要工作流程
+setup_ai_docs
+install_global_tools
+
+# 平行執行依賴套件安裝
+install_backend &
+pid_backend=$!
+
+install_frontend &
+pid_frontend=$!
+
+wait $pid_backend $pid_frontend
+
+# 確保產出 tasks.json
+generate_vscode_tasks
+
+echo "=================================================="
+echo "🎉 DevContainer Setup Completed Successfully!"
+echo "=================================================="
