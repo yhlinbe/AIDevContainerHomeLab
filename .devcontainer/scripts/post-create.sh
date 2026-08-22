@@ -78,3 +78,85 @@ wait $pid_backend $pid_frontend
 echo "=================================================="
 echo "🎉 DevContainer Setup Completed Successfully!"
 echo "=================================================="
+
+echo "=== 2. 生成多分頁 Terminal 設定 (.vscode/tasks.json) ==="
+mkdir -p .vscode
+
+cat <<'EOF' > .vscode/tasks.json
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "🚀 Open Dev Workspaces",
+      "type": "shell",
+      "command": "echo 'Workspaces Initialized!'",
+      "runOptions": {
+        "runOn": "folderOpen"
+      },
+      "presentation": {
+        "reveal": "silent"
+      },
+      "dependsOn": [
+        "Terminal: OpenCode (DeepSeek)",
+        "Terminal: Claude Code CLI",
+        "Terminal: NestJS Backend",
+        "Terminal: Go Service",
+        "Terminal: React Frontend",
+        "Terminal: Qwen & ChatGPT Workspace",
+        "Terminal: Infrastructure Logs"
+      ]
+    },
+    {
+      "label": "Terminal: OpenCode (DeepSeek)",
+      "type": "shell",
+      "command": "echo '=== OpenCode (DeepSeek) Ready ===' && opencode",
+      "problemMatcher": [],
+      "presentation": { "group": "dev-layout", "focus": false }
+    },
+    {
+      "label": "Terminal: Claude Code CLI",
+      "type": "shell",
+      "command": "echo '=== Claude Code CLI Ready ===' && claude",
+      "problemMatcher": [],
+      "presentation": { "group": "dev-layout", "focus": true }
+    },
+    {
+      "label": "Terminal: NestJS Backend",
+      "type": "shell",
+      "command": "echo '=== NestJS App ===' && cd backend/nestjs && npm run start:dev",
+      "problemMatcher": [],
+      "presentation": { "group": "dev-layout", "focus": false }
+    },
+    {
+      "label": "Terminal: Go Service",
+      "type": "shell",
+      "command": "echo '=== Go Service ===' && cd backend/golang && go run main.go",
+      "problemMatcher": [],
+      "presentation": { "group": "dev-layout", "focus": false }
+    },
+    {
+      "label": "Terminal: React Frontend",
+      "type": "shell",
+      "command": "echo '=== React App ===' && cd frontend/react && npm run dev",
+      "problemMatcher": [],
+      "presentation": { "group": "dev-layout", "focus": false }
+    },
+    {
+      "label": "Terminal: Qwen & ChatGPT Workspace",
+      "type": "shell",
+      "command": "echo '=== Qwen & ChatGPT Workspace ==='",
+      "problemMatcher": [],
+      "presentation": { "group": "dev-layout", "focus": false }
+    },
+    {
+      "label": "Terminal: Infrastructure Logs",
+      "type": "shell",
+      "command": "docker compose -f .devcontainer/docker-compose.dev.yml logs -f --tail=50",
+      "problemMatcher": [],
+      "presentation": { "group": "dev-layout", "focus": false }
+    }
+  ]
+}
+EOF
+
+echo "=== Post-Create 完成！ ==="

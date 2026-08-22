@@ -1,0 +1,22 @@
+{
+  "models": [
+    {
+      "title": "Gemini 1.5 Pro",
+      "provider": "gemini",
+      "model": "gemini-1.5-pro-latest",
+      "apiKey": "${GEMINI_API_KEY}"
+    },
+    {
+      "title": "Gemini 1.5 Flash",
+      "provider": "gemini",
+      "model": "gemini-1.5-flash-latest",
+      "apiKey": "${GEMINI_API_KEY}"
+    }
+  ],
+  "tabAutocompleteModel": {
+    "title": "Gemini Flash Autocomplete",
+    "provider": "gemini",
+    "model": "gemini-1.5-flash-latest",
+    "apiKey": "${GEMINI_API_KEY}"
+  }
+}

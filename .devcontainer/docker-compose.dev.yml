@@ -19,17 +19,13 @@ volumes:
   clickhouse_data:
 
 services:
-  # ---------------------------------------------------------------------------
-  # 1. High-Performance Caching (Valkey - Redis Drop-in Replacement)
-  # ---------------------------------------------------------------------------
   valkey:
     image: valkey/valkey:7.2-alpine
-    container_name: community-valkey
     restart: unless-stopped
     networks:
       - community-net
     ports:
-      - "6379:6379"
+      - "${HOST_VALKEY_PORT:-6379}:6379"
     volumes:
       - valkey_data:/data
     command: valkey-server --save 60 1 --loglevel notice
@@ -37,18 +33,14 @@ services:
       test: ["CMD", "valkey-cli", "ping"]
       <<: *healthcheck-defaults
 
-  # ---------------------------------------------------------------------------
-  # 2. Observability & Telemetry (ClickHouse + OpenTelemetry Collector)
-  # ---------------------------------------------------------------------------
   clickhouse:
     image: clickhouse/clickhouse-server:24.3-alpine
-    container_name: community-clickhouse
     restart: unless-stopped
     networks:
       - community-net
     ports:
-      - "8123:8123"   # HTTP Interface / Query
-      - "9000:9000"   # Native Client Interface
+      - "${HOST_CLICKHOUSE_PORT:-8123}:8123"
+      - "9000:9000"
     environment:
       - CLICKHOUSE_DB=otel_db
       - CLICKHOUSE_USER=default
@@ -62,63 +54,25 @@ services:
 
   otel-collector:
     image: otel/opentelemetry-collector-contrib:0.98.0
-    container_name: community-otel-collector
     restart: unless-stopped
     networks:
       - community-net
     ports:
-      - "4317:4317"   # OTLP gRPC receiver (NestJS / Go SDK 寫入端)
-      - "4318:4318"   # OTLP HTTP receiver
-      - "8888:8888"   # Collector Metrics
-    entrypoint: ["/bin/sh", "-c"]
-    command:
-      - |
-        cat <<'EOF' > /etc/otelcol-contrib/config.yaml
-        receivers:
-          otlp:
-            protocols:
-              grpc:
-                endpoint: 0.0.0.0:4317
-              http:
-                endpoint: 0.0.0.0:4318
-
-        processors:
-          batch:
-            timeout: 1s
-            send_batch_size: 1024
-
-        exporters:
-          clickhouse:
-            endpoint: "tcp://clickhouse:9000?database=otel_db"
-            ttl: 72h
-
-        service:
-          pipelines:
-            traces:
-              receivers: [otlp]
-              processors: [batch]
-              exporters: [clickhouse]
-            metrics:
-              receivers: [otlp]
-              processors: [batch]
-              exporters: [clickhouse]
-            logs:
-              receivers: [otlp]
-              processors: [batch]
-              exporters: [clickhouse]
-        EOF
-        exec /otelcol-contrib --config=/etc/otelcol-contrib/config.yaml
+      - "${HOST_OTEL_GRPC_PORT:-4317}:4317"
+      - "${HOST_OTEL_HTTP_PORT:-4318}:4318"
+      - "8888:8888"
+    volumes:
+      - ./config/otel-collector-config.yaml:/etc/otelcol-contrib/config.yaml:ro
     depends_on:
       - clickhouse
 
   grafana:
     image: grafana/grafana:10.4.0
-    container_name: community-grafana
     restart: unless-stopped
     networks:
       - community-net
     ports:
-      - "3001:3000"   # 對外連線端口 (http://localhost:3001)
+      - "${HOST_GRAFANA_PORT:-3001}:3000"
     environment:
       - GF_SECURITY_ADMIN_USER=admin
       - GF_SECURITY_ADMIN_PASSWORD=admin
@@ -127,12 +81,10 @@ services:
     entrypoint: ["/bin/sh", "-c"]
     command:
       - |
-        # 1. 建立設定檔目錄
         mkdir -p /etc/grafana/provisioning/datasources
         mkdir -p /etc/grafana/provisioning/dashboards
         mkdir -p /var/lib/grafana/dashboards
 
-        # 2. 自動配置 ClickHouse Data Source
         cat <<'EOF' > /etc/grafana/provisioning/datasources/clickhouse.yaml
         apiVersion: 1
         datasources:
@@ -149,7 +101,6 @@ services:
             isDefault: true
         EOF
 
-        # 3. 配置 Dashboard Provisioning 載入器
         cat <<'EOF' > /etc/grafana/provisioning/dashboards/dashboards.yaml
         apiVersion: 1
         providers:
@@ -164,7 +115,6 @@ services:
               path: /var/lib/grafana/dashboards
         EOF
 
-        # 4. 寫入 APM & Traces Dashboard JSON
         cat <<'EOF' > /var/lib/grafana/dashboards/otel-apm-traces.json
         {
           "annotations": { "list": [] },
@@ -231,7 +181,6 @@ services:
         }
         EOF
 
-        # 5. 寫入 Application Logs Dashboard JSON
         cat <<'EOF' > /var/lib/grafana/dashboards/otel-logs.json
         {
           "annotations": { "list": [] },
@@ -282,17 +231,12 @@ services:
         }
         EOF
 
-        # 6. 啟動 Grafana 主程序
         exec /run.sh
     depends_on:
       - clickhouse
 
-  # ---------------------------------------------------------------------------
-  # 3. PostgreSQL HA Cluster (etcd + Patroni Node 1/2 + HAProxy)
-  # ---------------------------------------------------------------------------
   etcd:
     image: quay.io/coreos/etcd:v3.5.9
-    container_name: community-etcd
     restart: unless-stopped
     networks:
       - community-net
@@ -311,8 +255,7 @@ services:
       <<: *healthcheck-defaults
 
   patroni-db1:
-    image: zalando/spilo-15:3.0-p1
-    container_name: patroni-db1
+    image: ghcr.io/zalando/spilo-15:3.0-p1
     restart: unless-stopped
     networks:
       - community-net
@@ -331,8 +274,7 @@ services:
         condition: service_healthy
 
   patroni-db2:
-    image: zalando/spilo-15:3.0-p1
-    container_name: patroni-db2
+    image: ghcr.io/zalando/spilo-15:3.0-p1
     restart: unless-stopped
     networks:
       - community-net
@@ -354,76 +296,39 @@ services:
 
   pg-haproxy:
     image: haproxy:2.8-alpine
-    container_name: community-db-lb
     restart: unless-stopped
     networks:
       - community-net
     ports:
-      - "5432:5432"   # PostgreSQL 對外入口
-      - "7000:7000"   # HAProxy Dashboard
-    entrypoint: ["/bin/sh", "-c"]
-    command:
-      - |
-        cat <<'EOF' > /usr/local/etc/haproxy/haproxy.cfg
-        global
-            maxconn 1000
-
-        defaults
-            mode tcp
-            timeout connect 5s
-            timeout client 30m
-            timeout server 30m
-
-        frontend stats
-            mode http
-            bind *:7000
-            stats enable
-            stats uri /
-
-        frontend postgres_front
-            bind *:5432
-            default_backend postgres_back
-
-        backend postgres_back
-            option httpchk GET /primary
-            http-check expect status 200
-            default-server inter 3s fall 3 rise 2 on-marked-down shutdown-sessions
-            server patroni1 patroni-db1:5432 maxconn 100 check port 8008
-            server patroni2 patroni-db2:5432 maxconn 100 check port 8008
-        EOF
-        exec haproxy -f /usr/local/etc/haproxy/haproxy.cfg
+      - "${HOST_PG_PORT:-5432}:5432"
+      - "${HOST_HAPROXY_STATS_PORT:-7000}:7000"
+    volumes:
+      - ./config/haproxy.cfg:/usr/local/etc/haproxy/haproxy.cfg:ro
     depends_on:
       - patroni-db1
       - patroni-db2
 
-  # ---------------------------------------------------------------------------
-  # 4. Authentication & IAM (Casdoor)
-  # ---------------------------------------------------------------------------
   casdoor:
     image: casbin/casdoor:v1.540.0
-    container_name: community-casdoor
     restart: unless-stopped
     networks:
       - community-net
     ports:
-      - "8000:8000"
+      - "${HOST_CASDOOR_PORT:-8000}:8000"
     environment:
       - driverName=postgres
       - dataSourceName=user=postgres password=PGPassword123 host=pg-haproxy port=5432 sslmode=disable dbname=casdoor
+      - dbName=casdoor
     depends_on:
       - pg-haproxy
 
-  # ---------------------------------------------------------------------------
-  # 5. Message Queue (Kafka - KRaft 模式)
-  # ---------------------------------------------------------------------------
   kafka:
     image: apache/kafka:3.7.0
-    container_name: community-kafka
     restart: unless-stopped
     networks:
       - community-net
     ports:
-      - "9092:9092"
+      - "${HOST_KAFKA_PORT:-9092}:9092"
     environment:
       KAFKA_NODE_ID: 1
       KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: 'CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT'
@@ -442,18 +347,14 @@ services:
     volumes:
       - kafka_data:/var/lib/kafka/data
 
-  # ---------------------------------------------------------------------------
-  # 6. Object Storage (SeaweedFS)
-  # ---------------------------------------------------------------------------
   seaweedfs:
     image: chrislusf/seaweedfs:latest
-    container_name: community-seaweedfs
     restart: unless-stopped
     networks:
       - community-net
     ports:
-      - "8333:8333"   # S3 API Endpoint
-      - "9333:9333"   # Master Server Dashboard
+      - "${HOST_SEAWEED_PORT:-8333}:8333"
+      - "9333:9333"
     command: "server -dir=/data -s3 -s3.port=8333"
     volumes:
       - seaweed_data:/data

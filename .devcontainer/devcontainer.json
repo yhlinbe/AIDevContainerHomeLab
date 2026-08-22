@@ -12,8 +12,12 @@
   },
   // 🔑 將宿主機的 AI API Keys 自動帶入容器內
   "containerEnv": {
+    "GEMINI_API_KEY": "${localEnv:GEMINI_API_KEY}",
+    "OPENAI_API_KEY": "${localEnv:OPENAI_API_KEY}",
+    "DEEPSEEK_API_KEY": "${localEnv:DEEPSEEK_API_KEY}",
+    "OPENCODE_API_KEY": "${localEnv:DEEPSEEK_API_KEY}",
     "ANTHROPIC_API_KEY": "${localEnv:ANTHROPIC_API_KEY}",
-    "OPENAI_API_KEY": "${localEnv:OPENAI_API_KEY}"
+    "DASHSCOPE_API_KEY": "${localEnv:DASHSCOPE_API_KEY}"
   },
   "customizations": {
     "vscode": {
@@ -41,47 +45,47 @@
         // -----------------------------------------------------------------
         // 1. Core Web, React, NestJS & Golang
         // -----------------------------------------------------------------
-        "dbaeumer.vscode-eslint",            // ESLint 檢查
-        "esbenp.prettier-vscode",          // Prettier 格式化
+        "dbaeumer.vscode-eslint", // ESLint 檢查
+        "esbenp.prettier-vscode", // Prettier 格式化
         // "dsznajder.es7-react-js-snippets",   // React / JSX Snippets
-        "antfu.goto-alias",                  // 別名跳轉 (@/components)
+        "antfu.goto-alias", // 別名跳轉 (@/components)
         // "formulahendry.auto-rename-tag",     // HTML/JSX 標籤同步修改
-        "golang.go",                         // Go 官方語言支援
-        "fatih.color",                       // Go 語法彩亮
-        "kevinrose.vsc-python-indent",       // (縮排輔助)
-        "mcuadros.vscode-goreleaser",        // Go Release 工具 (可選)
-        "golang.go-nightly",                 // (備選，保留 golang.go 即可)
-        "wildgums.go-struct-tag",            // 💡 一鍵自動產生/更新 Go struct 的 json/db/yaml tag
-        "Prisma.prisma",                     // Prisma Schema 語法高亮
-        "cweijan.vscode-database-client2",   // 支援 Redis/Kafka/PostgreSQL/MySQL 的整合資料庫用戶端
-        "jakob101.NestjsFileGenerator",      // 右鍵快速生成 NestJS Controller/Service/Module 檔案結構
-        "mishas.nestjs-snippets",            // NestJS 常用 Snippets 語法片段
+        "golang.go", // Go 官方語言支援
+        "fatih.color", // Go 語法彩亮
+        "kevinrose.vsc-python-indent", // (縮排輔助)
+        "mcuadros.vscode-goreleaser", // Go Release 工具 (可選)
+        "golang.go-nightly", // (備選，保留 golang.go 即可)
+        "wildgums.go-struct-tag", // 💡 一鍵自動產生/更新 Go struct 的 json/db/yaml tag
+        "Prisma.prisma", // Prisma Schema 語法高亮
+        "cweijan.vscode-database-client2", // 支援 Redis/Kafka/PostgreSQL/MySQL 的整合資料庫用戶端
+        "jakob101.NestjsFileGenerator", // 右鍵快速生成 NestJS Controller/Service/Module 檔案結構
+        "mishas.nestjs-snippets", // NestJS 常用 Snippets 語法片段
         "tomasz-szewczak.nestjs-schematics", // NestJS Schematics 視覺化生成器
 
         // -----------------------------------------------------------------
         // 2. React & Web 前端高效開發
         // -----------------------------------------------------------------
-        "dsznajder.es7-react-js-snippets",   // React / JSX Snippets
-        "glenn2223.live-sass",               // SCSS/Sass 即時編譯器 (可選)
-        "formulahendry.auto-rename-tag",     // HTML/JSX 標籤同步修改
-        "formulahendry.auto-close-tag",      // HTML/JSX 標籤自動補完
-        "antfu.goto-alias",                  // 別名跳轉 (@/components)
-        "steoener.react-refactor",           // React 元件自動拆分與 Refactor 工具
+        "dsznajder.es7-react-js-snippets", // React / JSX Snippets
+        "glenn2223.live-sass", // SCSS/Sass 即時編譯器 (可選)
+        "formulahendry.auto-rename-tag", // HTML/JSX 標籤同步修改
+        "formulahendry.auto-close-tag", // HTML/JSX 標籤自動補完
+        "antfu.goto-alias", // 別名跳轉 (@/components)
+        "steoener.react-refactor", // React 元件自動拆分與 Refactor 工具
 
         // -----------------------------------------------------------------
         // 2. AI Assistant & Code Generation (Claude, Superpower, OpenCode...)
         // -----------------------------------------------------------------
-        "Continue.continue",                 // Continue.dev: 支援介接 Gemini/ChatGPT/Ollama 的開源雙軌 AI Agent
-        "anthropic.claude-code",             // Claude Code CLI / Agent 官方擴充
-        "superpower.superpower",             // Superpower AI 輔助與 Codebase 分析
-        "opencode.opencode",                 // OpenCode 開源 AI 寫碼助手
-        "grillme.grillme",                   // GrillMe AI 代碼審查與架構質疑工具
+        "Continue.continue", // Continue.dev: 支援介接 Gemini/ChatGPT/Ollama 的開源雙軌 AI Agent
+        "anthropic.claude-code", // Claude Code CLI / Agent 官方擴充
+        "superpower.superpower", // Superpower AI 輔助與 Codebase 分析
+        "opencode.opencode", // OpenCode 開源 AI 寫碼助手
+        "grillme.grillme", // GrillMe AI 代碼審查與架構質疑工具
 
         // -----------------------------------------------------------------
         // 3. Documentation, Markdown & Mermaid Diagrams (簡報與架構繪圖)
         // -----------------------------------------------------------------
-        "marp-team.marp-vscode",             // Marp: 直接用 Markdown 寫簡報並匯出 PDF/PPTX
-        "yzhang.markdown-all-in-one",        // Markdown 快捷鍵、目錄自動生成
+        "marp-team.marp-vscode", // Marp: 直接用 Markdown 寫簡報並匯出 PDF/PPTX
+        "yzhang.markdown-all-in-one", // Markdown 快捷鍵、目錄自動生成
         "shd101wyy.markdown-preview-enhanced", // 高階 Markdown 預覽 (支援簡報投影片 Export)
         "vsciot-vscode.vscode-mermaid-preview", // Mermaid 流程圖/架構圖即時渲染
         "bpruitt-goddard.mermaid-markdown-syntax-highlighting", // Mermaid 語法高亮
@@ -89,27 +93,26 @@
         // -----------------------------------------------------------------
         // 4. Database, Kafka & Storage DevTools
         // -----------------------------------------------------------------
-        "ckp.vscode-pg-formatter",           // PostgreSQL SQL 格式化
-        "mtxr.sqltools",                     // SQLTools 輕量資料庫 GUI
-        "mtxr.sqltools-driver-pg",          // SQLTools PostgreSQL 驅動
-        "fiskal.vscode-kafka",               // Kafka 集群檢視器
-        "humao.rest-client",                 // .http API 請求測試器
-        "wallabyjs.console-ninja",           // Console Ninja: 直接在編輯器程式碼旁邊顯示 console.log 輸出
-        "hediet.debug-visualizer",           // Debug Visualizer: 將複雜資料結構 (Tree/Graph/JSON) 繪製成圖表
+        "ckp.vscode-pg-formatter", // PostgreSQL SQL 格式化
+        "mtxr.sqltools", // SQLTools 輕量資料庫 GUI
+        "mtxr.sqltools-driver-pg", // SQLTools PostgreSQL 驅動
+        "fiskal.vscode-kafka", // Kafka 集群檢視器
+        "humao.rest-client", // .http API 請求測試器
+        "wallabyjs.console-ninja", // Console Ninja: 直接在編輯器程式碼旁邊顯示 console.log 輸出
+        "hediet.debug-visualizer", // Debug Visualizer: 將複雜資料結構 (Tree/Graph/JSON) 繪製成圖表
 
         // -----------------------------------------------------------------
         // 5. DevOps, Docker, Git & Productivity
         // -----------------------------------------------------------------
-        "ms-azuretools.vscode-docker",       // Docker 容器管理
-        "redhat.vscode-yaml",                // YAML 驗證
-        "eamodio.gitlens",                   // GitLens 歷史追蹤
-        "mhutchie.git-graph",                // Git 分支視覺化
-        "usernamehw.errorlens",              // 錯誤行內顯示
-        "aaron-bond.better-comments",        // 註解顏色分類
-        "PKief.material-icon-theme",          // Material 檔案圖示
+        "ms-azuretools.vscode-docker", // Docker 容器管理
+        "redhat.vscode-yaml", // YAML 驗證
+        "eamodio.gitlens", // GitLens 歷史追蹤
+        "mhutchie.git-graph", // Git 分支視覺化
+        "usernamehw.errorlens", // 錯誤行內顯示
+        "aaron-bond.better-comments", // 註解顏色分類
+        "PKief.material-icon-theme", // Material 檔案圖示
         "streetsidesoftware.code-spell-checker", // 英文拼字檢查，避免變數名稱拼錯 (Code Spell Checker)
-        "alefragnani.Bookmarks",             // Bookmarks: 快速打書籤並在程式碼間跳轉
-
+        "alefragnani.Bookmarks" // Bookmarks: 快速打書籤並在程式碼間跳轉
       ]
     }
   },
@@ -121,7 +124,7 @@
     6379, // Valkey
     8000, // Casdoor IAM
     8080, // Go Microservice (建議改用 8080 避開 8000)
-    8123  // ClickHouse
+    8123 // ClickHouse
   ],
 
   // 語意化連接埠設定
@@ -143,21 +146,21 @@
       "label": "Casdoor IAM System",
       "onAutoForward": "silent"
     },
-    "3001": { 
-      "label": "Grafana O11y Dashboard", 
-      "onAutoForward": "openBrowser" 
+    "3001": {
+      "label": "Grafana O11y Dashboard",
+      "onAutoForward": "openBrowser"
     },
-    "6379": { 
-      "label": "Valkey Cache (Redis Compatible)", 
-      "onAutoForward": "silent" 
+    "6379": {
+      "label": "Valkey Cache (Redis Compatible)",
+      "onAutoForward": "silent"
     },
-    "4317": { 
-      "label": "Otel Collector (gRPC - Traces/Logs)", 
-      "onAutoForward": "silent" 
+    "4317": {
+      "label": "Otel Collector (gRPC - Traces/Logs)",
+      "onAutoForward": "silent"
     },
-    "8123": { 
-      "label": "ClickHouse HTTP DB API", 
-      "onAutoForward": "silent" 
+    "8123": {
+      "label": "ClickHouse HTTP DB API",
+      "onAutoForward": "silent"
     },
     "5432": {
       "label": "PostgreSQL Database (HAProxy)",
@@ -177,11 +180,11 @@
       "onAutoForward": "silent"
     }
   },
-  
+
   // 進入 Devcontainer 前，自動啟動背景基礎設施
   // "initializeCommand": "docker compose -f docker-compose.dev.yml up -d",
   "initializeCommand": "sh .devcontainer/scripts/init-host.sh",
-  
+
   // 自動安裝開關工具與套件
   // "postCreateCommand": "go install github.com/air-verse/air@latest && npm install -g @anthropic-ai/claude-code && cd backend-nest && npm install && cd ../frontend && npm install"
   "postCreateCommand": "bash .devcontainer/scripts/post-create.sh"
