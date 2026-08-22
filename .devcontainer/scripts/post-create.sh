@@ -5,7 +5,43 @@ echo "=================================================="
 echo "🚀 Starting DevContainer Post-Create Setup"
 echo "=================================================="
 
-# 1. 建立 AI 團隊文檔目錄與初始化檔案
+# 1. 建立 OpenCode 全局多 Provider 設定 (金鑰一律吃環境變數，絕不寫死)
+setup_opencode_config() {
+    echo "⚙️ Configuring OpenCode multi-provider config..."
+    mkdir -p ~/.config/opencode
+
+    cat <<'EOF' > ~/.config/opencode/opencode.json
+{
+  "$schema": "https://opencode.ai/config.json",
+  "model": "anthropic/claude-3-7-sonnet",
+  "smallModel": "google/gemini-2.5-flash",
+  "providers": {
+    "anthropic": {
+      "options": {
+        "apiKey": "{env:ANTHROPIC_API_KEY}"
+      }
+    },
+    "openai": {
+      "options": {
+        "apiKey": "{env:OPENAI_API_KEY}"
+      }
+    },
+    "google": {
+      "options": {
+        "apiKey": "{env:GEMINI_API_KEY}"
+      }
+    },
+    "openrouter": {
+      "options": {
+        "apiKey": "{env:OPENROUTER_API_KEY}"
+      }
+    }
+  }
+}
+EOF
+}
+
+# 2. 建立 AI 團隊文檔目錄與初始化檔案 + 自動鏈結專案系統指令
 setup_ai_docs() {
     echo "📁 Initializing AI Team Documentation Directories..."
     mkdir -p .ai/docs/discussions .ai/docs/conclusions .ai/docs/feedback
@@ -19,23 +55,30 @@ setup_ai_docs() {
 EOF
     fi
 
-    # 寫入 Alias 供手動開啟終端機時使用
-    echo 'alias claude="claude --dangerously-skip-permissions"' >> ~/.bashrc
-    echo 'alias opencode="opencode --config .ai/SYSTEM_INSTRUCTIONS.md"' >> ~/.bashrc
+    # 讓 OpenCode 自動吃專案內的系統指令規範
+    if [ -f .ai/SYSTEM_INSTRUCTIONS.md ]; then
+        ln -sf .ai/SYSTEM_INSTRUCTIONS.md OPENCODE.md
+    fi
+
+    # 寫入 PATH 與常用 Alias
+    {
+        echo 'export PATH="$(npm config get prefix)/bin:$PATH"'
+        echo 'alias claude="claude --dangerously-skip-permissions"'
+        echo 'alias opencode="opencode"'
+    } >> ~/.bashrc
 }
 
-# 2. 安裝 全局 CLI 工具與 AI Engines (修正 opencode -> opencode-ai)
+# 3. 安裝 全局 CLI 工具與 AI Engines
 install_global_tools() {
     echo "📦 [1/3] Installing global CLI tools & AI engines..."
     go install github.com/air-verse/air@latest || true
     
-    # 正確套件名稱：opencode-ai
     npm install -g @anthropic-ai/claude-code opencode-ai
     
     echo "✅ Global CLI tools and AI engines installed."
 }
 
-# 3. 安裝 後端 NestJS 依賴
+# 4. 安裝 後端 NestJS 依賴
 install_backend() {
     if [ -d "backend/nestjs" ]; then
         echo "📦 [2/3] Installing NestJS dependencies..."
@@ -50,7 +93,7 @@ install_backend() {
     fi
 }
 
-# 4. 安裝 前端 Frontend 依賴
+# 5. 安裝 前端 Frontend 依賴
 install_frontend() {
     if [ -d "frontend/react" ]; then
         echo "📦 [3/3] Installing React dependencies..."
@@ -65,7 +108,7 @@ install_frontend() {
     fi
 }
 
-# 5. 生成 VS Code 多分頁 Terminal Tasks (加入 .env 讀取與 Alias 參數)
+# 6. 生成 VS Code 多分頁 Terminal Tasks
 generate_vscode_tasks() {
     echo "⚙️ Generating .vscode/tasks.json..."
     mkdir -p .vscode
@@ -85,7 +128,7 @@ generate_vscode_tasks() {
         "reveal": "silent"
       },
       "dependsOn": [
-        "Terminal: OpenCode (DeepSeek)",
+        "Terminal: OpenCode (Multi-Model)",
         "Terminal: Claude Code CLI",
         "Terminal: NestJS Backend",
         "Terminal: Go Service",
@@ -95,9 +138,9 @@ generate_vscode_tasks() {
       ]
     },
     {
-      "label": "Terminal: OpenCode (DeepSeek)",
+      "label": "Terminal: OpenCode (Multi-Model)",
       "type": "shell",
-      "command": "echo '=== OpenCode (DeepSeek) Ready ===' && opencode --config .ai/SYSTEM_INSTRUCTIONS.md",
+      "command": "echo '=== OpenCode Ready ===' && opencode",
       "problemMatcher": [],
       "presentation": { "group": "dev-layout", "focus": false }
     },
@@ -149,6 +192,7 @@ EOF
 }
 
 # 執行主要工作流程
+setup_opencode_config
 setup_ai_docs
 install_global_tools
 
@@ -167,3 +211,9 @@ generate_vscode_tasks
 echo "=================================================="
 echo "🎉 DevContainer Setup Completed Successfully!"
 echo "=================================================="
+
+source ~/.bashrc
+
+# 3. 測試指令
+claude --version
+opencode --version
